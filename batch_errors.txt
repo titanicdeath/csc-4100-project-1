@@ -1,0 +1,13 @@
+definitely_not_a_real_command
+cd
+cd /tmp /var
+exit extra
+path
+ls
+ls > a > b
+ls >
+> out
+nonexistent_cmd > nofile.txt
+path /bin
+definitely_still_not_real
+pwd

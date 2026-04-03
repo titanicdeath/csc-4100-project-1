@@ -1,0 +1,14 @@
+pwd
+cd /tmp
+pwd
+cd
+cd /tmp /var
+cd /definitely_not_real_directory
+path /bin /usr/bin
+ls
+path
+ls
+path /bin
+pwd
+exit extra_arg
+exit

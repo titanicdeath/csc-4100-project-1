@@ -1,0 +1,6 @@
+pwd
+ls
+echo hello
+/bin/echo direct-path-test
+definitely_not_a_real_command
+pwd

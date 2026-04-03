@@ -1,0 +1,12 @@
+        ls
+pwd
+
+
+echo     spaced     words
+path      /bin      /usr/bin
+ls>/tmp/ws_out.txt
+cat /tmp/ws_out.txt
+ls&echo hi
+        echo leading-spaces
+           
+pwd

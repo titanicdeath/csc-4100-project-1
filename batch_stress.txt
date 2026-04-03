@@ -1,0 +1,25 @@
+pwd
+ls
+echo start-of-stress
+
+path /bin /usr/bin
+ls -la > stress_ls.txt
+cat stress_ls.txt
+
+echo alpha > alpha.txt & echo beta > beta.txt
+cat alpha.txt & cat beta.txt
+
+sleep 1 & echo parallel-check & pwd
+
+cd /tmp
+pwd
+echo tmpdir > tmp_file.txt
+cat tmp_file.txt
+
+path
+ls
+
+path /bin
+pwd
+nonexistent_cmd
+echo end-of-stress

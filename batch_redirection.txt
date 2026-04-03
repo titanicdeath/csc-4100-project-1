@@ -1,0 +1,13 @@
+ls -la /tmp > out1.txt
+cat out1.txt
+ls>/tmp/out2.txt
+cat /tmp/out2.txt
+echo hello > hello.txt
+cat hello.txt
+ls > a > b
+ls > a b
+ls >
+> out
+nonexistent_cmd > nope.txt
+pwd > pwdout.txt
+cat pwdout.txt

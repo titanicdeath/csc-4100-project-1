@@ -1,0 +1,7 @@
+ls & echo hello
+sleep 1 & sleep 1 & sleep 1
+echo left > a.txt & echo right > b.txt
+cat a.txt & cat b.txt
+ls&echo hi
+nonexistent_cmd & echo still-running
+pwd & ls & echo done
