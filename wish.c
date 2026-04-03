@@ -3,7 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 
-// The one and only error message you are allowed to print
+// The one and only error message allowed to print
 void print_error() {
     char error_message[30] = "An error has occurred\n";
     write(STDERR_FILENO, error_message, strlen(error_message));
