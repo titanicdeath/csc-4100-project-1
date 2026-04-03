@@ -9,16 +9,44 @@ void print_error() {
     write(STDERR_FILENO, error_message, strlen(error_message));
 }
 
-// char *tokenizeInput(char *line) {
-//     char *token;
-//     char *saveptr = line;
-//     char export[5];
-//     while ((token = strsep(&saveptr, " \t")) != NULL) {
-//         /* code */
-//     }
-    
+char **tokenizeInput(char *line, int *argc_out) {
+    int capacity = 10;
+    int count = 0;
+    char **tokens = malloc(sizeof(char *) * capacity);
+    char *token;
+    char *saveptr = line;
 
-// }
+    if (tokens == NULL) {
+        print_error();
+        exit(1);
+    }
+
+    while ((token = strsep(&saveptr, " \t")) != NULL) {
+        // Skip empty tokens caused by repeated spaces/tabs
+        if (*token == '\0') {
+            continue;
+        }
+
+        if (count >= capacity - 1) {
+            capacity *= 2;
+            char **temp = realloc(tokens, sizeof(char *) * capacity);
+            if (temp == NULL) {
+                free(tokens);
+                print_error();
+                exit(1);
+            }
+            tokens = temp;
+        }
+        tokens[count++] = token;
+    }
+    tokens[count] = NULL;
+
+    if (argc_out != NULL) {
+        *argc_out = count;
+    }
+
+    return tokens;
+}
 
 int main(int argc, char *argv[]) {
     char *line = NULL;
@@ -33,34 +61,26 @@ int main(int argc, char *argv[]) {
 
             // getline() reads the whole line
             read = getline(&line, &len, stdin);
-            printf("size: %ld", len);
-            // If user hits Ctrl+D (EOF), exit gracefully
-            if (read == -1) {
-                break;
-            }
 
-            // Remove the newline character at the end of the input
-            if (line[read - 1] == '\n') {
-                line[read - 1] = '\0';
-            }
+            // Tokenizes line, declare variable 
+            int arg_count;
+            char **args = tokenizeInput(line, &arg_count);
+            
+            
+            if (arg_count == 0) { free(args); continue; } // Ignore empty input
+            if (strcmp(args[0], "exit") == 0) { free(args); exit; } // Built-in exit command.
+            if (read == -1) { break; } // If user hits Ctrl+D (EOF), exit gracefully
 
-            // Ignore empty inputs (user just hit enter)
-            if (strlen(line) == 0) {
-                continue;
-            }
+            // Echo user input. proof it works:
+            printf("Token: %s\n", args[0]);
 
-            // --- BUILT-IN COMMAND: exit ---
-            if (strcmp(line, "exit") == 0) {
-                exit(0);
-            }
 
             // TODO: Phase 2 - Parse the input into arguments using strsep()
             // TODO: Phase 2 - fork() a child process
             // TODO: Phase 2 - Use execv() to run the command
             // TODO: Phase 2 - wait() for the child to finish
 
-            // Echo what the user typed to prove it works:
-            printf("You typed: %s\n", line);
+
         }
     } 
     // pass a file like ./wish batch.txt
