@@ -9,16 +9,16 @@ void print_error() {
     write(STDERR_FILENO, error_message, strlen(error_message));
 }
 
-char *tokenizeInput(char *line) {
-    char *token;
-    char *saveptr = line;
-    char export[5];
-    while ((token = strsep(&saveptr, " \t")) != NULL) {
-        /* code */
-    }
+// char *tokenizeInput(char *line) {
+//     char *token;
+//     char *saveptr = line;
+//     char export[5];
+//     while ((token = strsep(&saveptr, " \t")) != NULL) {
+//         /* code */
+//     }
     
 
-}
+// }
 
 int main(int argc, char *argv[]) {
     char *line = NULL;
