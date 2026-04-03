@@ -4,15 +4,17 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 
 // Only error message allowed to print
 void print_error(void);
+char *normalizeInput(char *line);
 char **tokenizeInput(char *line, int *argc_out);
 int builtin_exit(char **args, int argc);
 int builtin_cd(char **args, int argc);
 int builtin_path(char **args, int argc);
 int run_builtin_if_match(char **args, int argc);
-int execute_external(char **args);
+int execute_external(char **args, char *redirect_file);
 void process_line(char *line);
 
 // Built-in function pointer type
@@ -76,23 +78,106 @@ void print_error(void) {
 }
 
 void process_line(char *line) {
-    int arg_count = 0;
-    char **args = tokenizeInput(line, &arg_count);
+    pid_t child_pids[100];
+    int child_count = 0;
+    char *normalized = normalizeInput(line);
+    char *segment;
+    char *saveptr = normalized;
 
-    // Ignore empty input
-    if (arg_count == 0) {
+    if (normalized == NULL) { print_error(); exit(1); }
+
+    while ((segment = strsep(&saveptr, "&")) != NULL) {
+        int arg_count = 0;
+        int redirect_count = 0;
+        int redirect_index = -1;
+        char *redirect_file = NULL;
+        char **args = tokenizeInput(segment, &arg_count);
+
+        // Ignore fully empty lines, but not empty command slots between & operators
+        if (arg_count == 0) {
+            if (saveptr != NULL || child_count > 0) { 
+                print_error(); 
+                free(args); 
+                free(normalized); 
+                return; 
+            }
+            free(args);
+            continue;
+        }
+
+        for (int i = 0; i < arg_count; i++) {
+            if (strcmp(args[i], ">") == 0) {
+                redirect_count++;
+                redirect_index = i;
+            }
+        }
+
+        if (redirect_count > 1) { 
+                print_error(); 
+                free(args); 
+                free(normalized); 
+                return; 
+            }
+
+        if (redirect_count == 1) {
+            if (redirect_index == 0 || redirect_index != arg_count - 2) { 
+                print_error(); 
+                free(args); 
+                free(normalized); 
+                return; 
+            }
+            redirect_file = args[arg_count - 1];
+            args[redirect_index] = NULL;
+            arg_count = redirect_index;
+            if (arg_count == 0) { 
+                print_error(); 
+                free(args); 
+                free(normalized); 
+                return; 
+            }
+        }
+
+        // Check built-ins first
+        // Otherwise treat as external command
+        if (run_builtin_if_match(args, arg_count)) {
+            if (redirect_file != NULL) { 
+                print_error(); 
+                free(args); 
+                free(normalized); 
+                return; }
+        }
+        else {
+            pid_t pid = execute_external(args, redirect_file);
+            if (pid > 0) { child_pids[child_count++] = pid; }
+        }
+
+        // Free token array
         free(args);
-        return;
     }
 
-    // Check built-ins first
-    // Otherwise treat as external command
-    if (!run_builtin_if_match(args, arg_count)) {
-        execute_external(args);
+    for (int i = 0; i < child_count; i++) { waitpid(child_pids[i], NULL, 0); }
+    free(normalized);
+}
+
+char *normalizeInput(char *line) {
+    size_t len = strlen(line);
+    size_t capacity = len * 3 + 1;
+    char *normalized = malloc(capacity);
+    size_t j = 0;
+
+    if (normalized == NULL) { return NULL; }
+
+    for (size_t i = 0; i < len; i++) {
+        if (line[i] == '>' || line[i] == '&') {
+            normalized[j++] = ' ';
+            normalized[j++] = line[i];
+            normalized[j++] = ' ';
+        }
+        else { normalized[j++] = line[i]; }
     }
 
-    // Free token array
-    free(args);
+    normalized[j] = '\0';
+    return normalized;
 }
 
 char **tokenizeInput(char *line, int *argc_out) {
@@ -181,7 +266,7 @@ int run_builtin_if_match(char **args, int argc) {
 }
 
 // Run non-built-in external command
-int execute_external(char **args) {
+int execute_external(char **args, char *redirect_file) {
     char fullpath[1024];
     int found = 0;
 
@@ -193,23 +278,29 @@ int execute_external(char **args) {
     }
 
     // Command not found in any allowed path
-    if (!found) { print_error(); return 1; }
+    if (!found) { print_error(); return -1; }
 
     // Create child process
     pid_t pid = fork();
 
-    if (pid < 0) {print_error(); return 1; }
+    if (pid < 0) {print_error(); return -1; }
 
     if (pid == 0) {
+        if (redirect_file != NULL) {
+            int fd = open(redirect_file, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+            if (fd < 0) { print_error(); _exit(1); }
+            if (dup2(fd, STDOUT_FILENO) < 0) { print_error(); close(fd); _exit(1); }
+            if (dup2(fd, STDERR_FILENO) < 0) { print_error(); close(fd); _exit(1); }
+            close(fd);
+        }
+
         // Child exec command
         execv(fullpath, args);
 
         // Only reached if execv fails
         print_error();
-        exit(1);
+        _exit(1);
     }
 
-    // Parent waits for child to finish
-    waitpid(pid, NULL, 0);
-    return 1;
+    return pid;
 }
