@@ -16,6 +16,7 @@ int builtin_path(char **args, int argc);
 int run_builtin_if_match(char **args, int argc);
 int execute_external(char **args, char *redirect_file);
 void process_line(char *line);
+void clear_paths(void);
 
 // Built-in function pointer type
 typedef int (*builtin_func)(char **args, int argc);
@@ -28,7 +29,15 @@ typedef struct {
 
 // Global shell path list
 char *path_list[100];
-int path_count = 1;
+int path_count = 0;
+
+void clear_paths(void) {
+    for (int i = 0; i < path_count; i++) {
+        free(path_list[i]);
+        path_list[i] = NULL;
+    }
+    path_count = 0;
+}
 
 int main(int argc, char *argv[]) {
     char *line = NULL;
@@ -36,7 +45,9 @@ int main(int argc, char *argv[]) {
     ssize_t read;
 
     // Default search path
-    path_list[0] = "/bin";
+    path_list[0] = strdup("/bin");
+    if (path_list[0] == NULL) { print_error(); exit(1); }
+    path_count = 1;
 
     // Interactive Loop
     if (argc == 1) {
@@ -69,6 +80,7 @@ int main(int argc, char *argv[]) {
 
     // Free the memory getline() allocated
     free(line);
+    clear_paths();
     return 0;
 }
 
@@ -239,9 +251,17 @@ int builtin_cd(char **args, int argc) {
 
 // Built-in path command
 int builtin_path(char **args, int argc) {
-    // Clear old path list
-    path_count = 0;
-    for (int i = 1; i < argc; i++) { path_list[path_count++] = args[i]; } // path with no extra arguments means no search paths
+    clear_paths();
+
+    for (int i = 1; i < argc; i++) {
+        path_list[path_count] = strdup(args[i]);
+        if (path_list[path_count] == NULL) {
+            print_error();
+            exit(1);
+        }
+        path_count++;
+    }
+
     return 1;
 }
 
