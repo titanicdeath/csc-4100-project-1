@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 
             // getline() reads the whole line
             read = getline(&line, &len, stdin);
-            printf("size: %s", len);
+            printf("size: %ld", len);
             // If user hits Ctrl+D (EOF), exit gracefully
             if (read == -1) {
                 break;
