@@ -68,8 +68,7 @@ int main(int argc, char *argv[]) {
             
             
             if (arg_count == 0) { free(args); continue; } // Ignore empty input
-            if (strcmp(args[0], "exit") == 0) { free(args); 
-                exit; } // Built-in exit command.
+            if (strcmp(args[0], "exit") == 0) { free(args); exit(0); } // Built-in exit command.
             if (read == -1) { break; } // If user hits Ctrl+D (EOF), exit gracefully
 
             // Echo user input. proof it works:
