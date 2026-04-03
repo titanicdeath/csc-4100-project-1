@@ -1,0 +1,6 @@
+pwd
+ls
+cd ..
+pwd
+path
+ls

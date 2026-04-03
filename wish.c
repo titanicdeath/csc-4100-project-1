@@ -13,6 +13,7 @@ int builtin_cd(char **args, int argc);
 int builtin_path(char **args, int argc);
 int run_builtin_if_match(char **args, int argc);
 int execute_external(char **args);
+void process_line(char *line);
 
 // Built-in function pointer type
 typedef int (*builtin_func)(char **args, int argc);
@@ -44,36 +45,25 @@ int main(int argc, char *argv[]) {
             // getline() reads the whole line
             read = getline(&line, &len, stdin);
 
-            if (read == -1) {break;} // If user hits Ctrl+D (EOF), exit gracefully
-            if (read > 0 && line[read - 1] == '\n') { line[read - 1] = '\0';} // Strip trailing newline from getline()
-
-            // Tokenizes line, declare variable
-            int arg_count = 0;
-            char **args = tokenizeInput(line, &arg_count);
-
-            // Ignore empty input
-            if (arg_count == 0) { free(args); continue;}
-
-            // Check built-ins first
-            // Otherwise treat as external command
-            if (!run_builtin_if_match(args, arg_count)) {
-                execute_external(args);
-            }
-            // Free token array
-            free(args);
+            if (read == -1) { break; } // If user hits Ctrl+D (EOF), exit gracefully
+            if (read > 0 && line[read - 1] == '\n') { line[read - 1] = '\0'; } // Strip trailing newline from getline()
+            process_line(line);
         }
     }
     // pass a file like ./wish batch.txt
     else if (argc == 2) {
-        // TODO: Phase 4 - Open the file, read line by line instead of stdin
-        printf("Batch mode not yet implemented.\n");
-    }
+        FILE *batch_file = fopen(argv[1], "r");
 
-    // Too many arguments
-    else {
-        print_error();
-        exit(1);
+        if (batch_file == NULL) { print_error(); exit(1); } // If batch file cannot be opened, print error and exit
+
+        while ((read = getline(&line, &len, batch_file)) != -1) {
+            if (read > 0 && line[read - 1] == '\n') { line[read - 1] = '\0'; } // Strip trailing newline from getline()
+            process_line(line);
+        }
+        fclose(batch_file);
     }
+    
+    else { print_error(); exit(1); } // Too many arguments
 
     // Free the memory getline() allocated
     free(line);
@@ -83,6 +73,26 @@ int main(int argc, char *argv[]) {
 void print_error(void) {
     char error_message[30] = "An error has occurred\n";
     write(STDERR_FILENO, error_message, strlen(error_message));
+}
+
+void process_line(char *line) {
+    int arg_count = 0;
+    char **args = tokenizeInput(line, &arg_count);
+
+    // Ignore empty input
+    if (arg_count == 0) {
+        free(args);
+        return;
+    }
+
+    // Check built-ins first
+    // Otherwise treat as external command
+    if (!run_builtin_if_match(args, arg_count)) {
+        execute_external(args);
+    }
+
+    // Free token array
+    free(args);
 }
 
 char **tokenizeInput(char *line, int *argc_out) {
