@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
-g++ ./wish.c -o wish
+cc -o wish wish.c -Wall -Werror
 
