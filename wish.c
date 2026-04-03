@@ -48,6 +48,8 @@ char **tokenizeInput(char *line, int *argc_out) {
     return tokens;
 }
 
+
+
 int main(int argc, char *argv[]) {
     char *line = NULL;
     size_t len = 0;
@@ -66,13 +68,18 @@ int main(int argc, char *argv[]) {
             int arg_count;
             char **args = tokenizeInput(line, &arg_count);
             
-            
             if (arg_count == 0) { free(args); continue; } // Ignore empty input
             if (strcmp(args[0], "exit") == 0) { free(args); exit(0); } // Built-in exit command.
             if (read == -1) { break; } // If user hits Ctrl+D (EOF), exit gracefully
 
             // Echo user input. proof it works:
             printf("Token: %s\n", args[0]);
+
+            // pid_t pid = fork();
+            // if (pid == 0) {
+            //     // child exec command
+            //     execv(resolved)
+            // }
 
 
             // TODO: Phase 2 - Parse the input into arguments using strsep()
