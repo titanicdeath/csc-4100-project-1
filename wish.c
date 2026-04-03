@@ -3,10 +3,21 @@
 #include <string.h>
 #include <unistd.h>
 
-// The one and only error message allowed to print
+// Only error message allowed to print
 void print_error() {
     char error_message[30] = "An error has occurred\n";
     write(STDERR_FILENO, error_message, strlen(error_message));
+}
+
+char *tokenizeInput(char *line) {
+    char *token;
+    char *saveptr = line;
+    char export[5];
+    while ((token = strsep(&saveptr, " \t")) != NULL) {
+        /* code */
+    }
+    
+
 }
 
 int main(int argc, char *argv[]) {
@@ -14,15 +25,15 @@ int main(int argc, char *argv[]) {
     size_t len = 0;
     ssize_t read;
 
-    // Interactive Mode Loop
+    // Interactive Loop
     if (argc == 1) {
         while (1) {
             printf("wish> ");
-            fflush(stdout); // Forces the prompt to print immediately
+            fflush(stdout); // Prompt print immediately
 
-            // getline() allocates memory for you and reads the whole line
+            // getline() reads the whole line
             read = getline(&line, &len, stdin);
-            
+            printf("size: %s", len);
             // If user hits Ctrl+D (EOF), exit gracefully
             if (read == -1) {
                 break;
@@ -52,7 +63,7 @@ int main(int argc, char *argv[]) {
             printf("You typed: %s\n", line);
         }
     } 
-    // Batch Mode (If they pass a file like ./wish batch.txt)
+    // pass a file like ./wish batch.txt
     else if (argc == 2) {
         // TODO: Phase 4 - Open the file, read line by line instead of stdin
         printf("Batch mode not yet implemented.\n");
